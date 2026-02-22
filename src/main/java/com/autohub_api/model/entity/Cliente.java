@@ -9,12 +9,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "clientes")
+@Table(name = "clientes",
+uniqueConstraints = @UniqueConstraint(columnNames = {"tenant_id", "cpf"}))
 public class Cliente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @NotNull
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,7 +28,8 @@ public class Cliente {
     private String nome;
 
     @Size(max = 14, message = "CPF must not exceed 14 characters")
-    @Column(length = 14, unique = true)
+    @Column(length = 14, nullable = false)
+    @NotBlank(message= "CPF is required")
     private String cpf;
 
     @Size(max = 20, message = "Telefone must not exceed 20 characters")

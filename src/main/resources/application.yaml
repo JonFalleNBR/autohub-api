@@ -3,10 +3,10 @@ spring:
     name: autohub-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/autohub
+    url: ${DB_URL}
     username: autohub
     password: autohub123
-    driver-class-name: org.postgresql.Driver
+
 
   jpa:
     hibernate:
