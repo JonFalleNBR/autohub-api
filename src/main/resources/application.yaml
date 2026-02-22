@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: autohub-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/autohub
+    username: autohub
+    password: autohub123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
