@@ -10,4 +10,5 @@ public class AutohubApiApplication {
 		SpringApplication.run(AutohubApiApplication.class, args);
 	}
 
+
 }

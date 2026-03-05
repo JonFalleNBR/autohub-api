@@ -7,7 +7,6 @@ spring:
     username: autohub
     password: autohub123
 
-
   jpa:
     hibernate:
       ddl-auto: validate
