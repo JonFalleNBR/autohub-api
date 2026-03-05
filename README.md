@@ -1,244 +1,198 @@
-# 🚗 AutoHub API
+# 🚗 Autohub API
 
-Sistema de gerenciamento de oficina mecânica com Spring Boot.
+![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-Database_Migrations-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Architecture](https://img.shields.io/badge/Architecture-Multi--Tenant-blueviolet?style=for-the-badge)
 
----
+Backend SaaS multi-tenant para gestão de oficinas automotivas.
 
-## ⚡ INÍCIO RÁPIDO
-
-### 1️⃣ Setup Inicial (Primeira Vez)
-```powershell
-.\setup.ps1
-```
-
-Digite `sim` quando solicitado.
-
-### 2️⃣ Executar Aplicação
-Execute pelo IntelliJ ou:
-```powershell
-.\mvnw spring-boot:run
-```
-
-✅ **Pronto!** A aplicação estará rodando em `http://localhost:8080`
+Projeto desenvolvido com foco em arquitetura profissional, versionamento de banco, isolamento por tenant e boas práticas de engenharia de software.
 
 ---
 
-## 📋 Pré-requisitos
+## 🧱 Arquitetura
 
-- ☕ Java 21
-- 🐳 Docker Desktop
-- 📦 Maven (incluído via mvnw)
-
----
-
-## 🔧 Scripts Disponíveis
-
-### `setup.ps1` (Recomendado)
-Setup completo automático. Usa na primeira vez ou quando tiver problemas.
-```powershell
-.\setup.ps1
-```
-
-### `start-db-quick.ps1`
-Inicia o banco rapidamente (sem resetar dados).
-```powershell
-.\start-db-quick.ps1
-```
-
-### `reset-db.ps1`
-Reseta o banco (DELETA todos os dados).
-```powershell
-.\reset-db.ps1
-```
+- Arquitetura em camadas (Controller → Service → Repository)
+- Multi-tenancy por `tenant_id`
+- Versionamento de banco com Flyway
+- Validação dupla (Bean Validation + Constraints SQL)
+- Ambiente reproduzível via Docker
+- Hibernate com validação de schema
 
 ---
 
-## 🗄️ Estrutura do Banco
+## 🛠️ Stack Tecnológica
 
-```
-tenants (Oficinas)
-    ↓
-clientes (Donos dos carros)
-    ↓
-cars (Carros)
-    ↓
-service_history (Histórico de serviços)
-```
-
-### Migrations Flyway:
-- `V1__create_tenants.sql` - Tabela de oficinas
-- `V2__create_clientes.sql` - Tabela de clientes
-- `V3__create_cars.sql` - Tabela de carros
-- `V4__create_service_history.sql` - Histórico de serviços
+| Tecnologia        | Versão |
+|------------------|--------|
+| Java             | 21     |
+| Spring Boot      | 3.5.x  |
+| Spring Data JPA  | ✓      |
+| Hibernate        | 6.x    |
+| PostgreSQL       | 16     |
+| Flyway           | ✓      |
+| Docker           | ✓      |
+| Maven Wrapper    | ✓      |
 
 ---
 
-## 🚨 Problemas Comuns
+## 🗄️ Banco de Dados
 
-### Erro: "autenticação do tipo senha falhou"
-**Solução:**
-```powershell
-.\setup.ps1
-```
+### Entidades principais
 
-### Erro: "Docker is not running"
-**Solução:**
-1. Abra o Docker Desktop
-2. Aguarde iniciar
-3. Execute `.\setup.ps1` novamente
+- `tenants`
+- `clientes`
+- `cars`
+- `service_history`
 
-### Erro: "Port 5432 is already in use"
-**Solução 1:** Pare o processo na porta 5432
-```powershell
-netstat -ano | findstr :5432
-```
+### Conceitos aplicados
 
-**Solução 2:** Mude a porta no `.env`:
-```env
-POSTGRES_PORT=5433
-```
+- UUID como chave primária
+- Integridade referencial forte
+- Índices estratégicos
+- Constraint única composta `(tenant_id, cpf)`
+- Versionamento controlado por migrations
 
 ---
 
-## 📚 Documentação
+## 🔐 Configuração
 
-- **FIX_AUTH_ERROR.md** - Solução detalhada de problemas de autenticação
-- **ESTRUTURA_CORRETA_CLIENTE_CARRO.md** - Modelo de dados completo
-- **GUIA_FINAL_EXECUCAO.md** - Guia passo a passo
+As configurações sensíveis devem ser definidas via variáveis de ambiente.
+
+Crie um arquivo `.env` baseado no modelo:
+
+```
+DB_URL=
+DB_USERNAME=
+DB_PASSWORD=
+```
+
+Não versionar o arquivo `.env`.
 
 ---
 
-## 🔗 Endpoints
+## 🐳 Executando com Docker
 
-### API Documentation (Swagger)
-```
-http://localhost:8080/swagger-ui.html
-```
+### Subir banco
 
-### Health Check
 ```
-http://localhost:8080/actuator/health
+docker-compose up -d
 ```
 
----
+### Derrubar ambiente (removendo volume)
 
-## 🛠️ Desenvolvimento
-
-### Estrutura do Projeto
 ```
-src/main/
-├── java/com/autohub_api/
-│   ├── model/entity/         # Entidades JPA
-│   │   ├── Tenant.java
-│   │   ├── Cliente.java
-│   │   ├── Car.java
-│   │   └── ServiceHistory.java
-│   │
-│   └── repository/           # Repositories Spring Data
-│       ├── TenantRepository.java
-│       ├── ClienteRepository.java
-│       ├── CarRepository.java
-│       └── ServiceHistoryRepository.java
-│
-└── resources/
-    ├── application.yaml      # Configuração
-    └── db/migration/         # Migrations Flyway
-```
-
-### Comandos Maven
-```powershell
-# Compilar
-.\mvnw clean install
-
-# Executar
-.\mvnw spring-boot:run
-
-# Testes
-.\mvnw test
-```
-
-### Comandos Docker
-```powershell
-# Ver logs do banco
-docker-compose logs -f db
-
-# Parar banco
-docker-compose down
-
-# Parar e limpar volumes
 docker-compose down -v
+```
 
-# Ver containers rodando
+### Ver containers ativos
+
+```
 docker ps
+```
 
-# Entrar no PostgreSQL
+### Acessar banco manualmente
+
+```
 docker exec -it autohub-db psql -U autohub -d autohub
 ```
 
 ---
 
-## 📊 Variáveis de Ambiente
+## 🚀 Rodando a aplicação
 
-Arquivo `.env` (já configurado):
-```env
-POSTGRES_DB=autohub
-POSTGRES_USER=autohub
-POSTGRES_PASSWORD=autohub123
-POSTGRES_PORT=5432
+### Via Maven Wrapper
+
+Linux / Mac:
+
+```
+./mvnw spring-boot:run
+```
+
+Windows:
+
+```
+mvnw spring-boot:run
+```
+
+Aplicação sobe em:
+
+```
+http://localhost:8080
 ```
 
 ---
 
-## ✅ Checklist de Funcionamento
+## 🔄 Flyway Migrations
 
-Após executar `.\setup.ps1`, você deve ver:
+Localização:
 
-1. ✅ Docker rodando
-2. ✅ Container `autohub-db` ativo
-3. ✅ PostgreSQL aceitando conexões
-4. ✅ Aplicação Spring Boot iniciando
-5. ✅ Flyway criando 4 tabelas
-6. ✅ Tomcat rodando na porta 8080
+```
+src/main/resources/db/migration
+```
+
+Padrão utilizado:
+
+```
+V1__create_tenants.sql
+V2__create_clientes.sql
+V3__create_cars.sql
+V4__create_service_history.sql
+```
+
+O banco é versionado automaticamente ao subir a aplicação.
 
 ---
 
-## 🎯 Fluxo de Trabalho
+## 🧠 Conceitos Aplicados
 
-### Primeira vez:
-```powershell
-.\setup.ps1              # Setup inicial
-.\mvnw spring-boot:run   # Executar app
+- Multi-tenancy real por `tenant_id`
+- Separação clara de responsabilidades
+- Validação em múltiplas camadas
+- Versionamento de banco controlado
+- Ambiente local reproduzível
+- Estrutura preparada para JWT
+- Estrutura pronta para DTO + Mapper
+- Base preparada para CI/CD
+
+---
+
+## 📌 Roadmap
+
+- [ ] Filtro automático por tenant
+- [ ] Autenticação JWT
+- [ ] DTO + Mapper
+- [ ] Testes com Testcontainers
+- [ ] OpenAPI / Swagger
+- [ ] Deploy em ambiente cloud
+
+---
+
+## 📂 Estrutura do Projeto
+
 ```
-
-### Uso diário:
-```powershell
-.\start-db-quick.ps1     # Iniciar banco
-.\mvnw spring-boot:run   # Executar app
-```
-
-### Limpar dados:
-```powershell
-.\reset-db.ps1           # Resetar banco
-.\mvnw spring-boot:run   # Executar app (Flyway recriará tabelas)
+com.autohub_api
+ ├── controller
+ ├── service
+ ├── repository
+ ├── model.entity
+ └── config
 ```
 
 ---
 
-## 📞 Suporte
+## 👨‍💻 Autor
 
-Leia a documentação completa em:
-- `FIX_AUTH_ERROR.md` - Problemas de autenticação
-- `ESTRUTURA_CORRETA_CLIENTE_CARRO.md` - Modelo de dados
+Desenvolvido como projeto de estudo para construção de um SaaS real de gestão automotiva com foco em arquitetura escalável.
 
 ---
 
-## 🎉 Status
+## 🏁 Status
 
-✅ Banco de dados configurado  
-✅ Migrations Flyway prontas  
-✅ Entidades JPA completas  
-✅ Repositories funcionais  
-✅ Scripts automatizados  
-
-**Pronto para desenvolvimento!** 🚀
-
+✔ Banco versionado  
+✔ Multi-tenancy implementado  
+✔ API funcional  
+🚧 Em evolução contínua
