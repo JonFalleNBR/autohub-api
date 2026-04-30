@@ -87,6 +87,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     // ──────────────────────────────────────────────
 
     /**
+     * Busca um usuário pelo ID garantindo que ele pertence ao tenant informado.
+     * Método principal para GET por ID na camada de Service — evita que um tenant
+     * acesse dados de outro tenant mesmo conhecendo o UUID.
+     */
+    Optional<Usuario> findByIdAndTenantId(UUID id, UUID tenantId);
+
+    /**
      * Verifica se um usuário específico pertence a um tenant.
      * Usado para validação de acesso (segurança multi-tenant).
      */

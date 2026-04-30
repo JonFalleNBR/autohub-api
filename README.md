@@ -157,6 +157,7 @@ Responsável pelos operadores que acessam o sistema. Suporta duas roles:
 | `findByTenantIdAndAtivoFalse(tenantId)`       | Lista usuários inativos (auditoria/reativação)         |
 | `findByTenantIdAndRole(tenantId, role)`        | Filtra usuários por role dentro do tenant              |
 | `findByTenantIdAndRoleAndAtivoTrue(…)`        | Usuários ativos com role específica                    |
+| `findByIdAndTenantId(id, tenantId)`           | GET seguro por ID garantindo isolamento de tenant      |
 | `existsByIdAndTenantId(id, tenantId)`         | Segurança: garante que o usuário pertence ao tenant    |
 | `countActiveByTenantId(tenantId)`             | Conta usuários ativos (billing / limite de plano)      |
 | `findByTenantIdAndNomeContainingIgnoreCase(…)` | Busca usuário por nome parcial no painel admin        |
