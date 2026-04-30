@@ -22,6 +22,77 @@ Projeto desenvolvido com foco em arquitetura profissional, versionamento de banc
 - Ambiente reproduzível via Docker
 - Hibernate com validação de schema
 
+```
+HTTP Request
+     │
+     ▼
+┌─────────────┐
+│  Controller │  ← Recebe a requisição, valida entrada, retorna resposta HTTP
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   Service   │  ← Contém a lógica de negócio (regras, cálculos, orquestração)
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  Repository │  ← Acessa o banco de dados via Spring Data JPA
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│ PostgreSQL  │  ← Persistência, integridade referencial, índices
+└─────────────┘
+```
+
+---
+
+## 🗃️ Diagrama de Entidades (ER)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                            TENANTS                               │
+│  id (PK) │ name │ slug (UNIQUE) │ created_at                    │
+└──────────┬───────────────────────────────────────────────────────┘
+           │ 1
+           │ possui muitos
+           ├─────────────────────────────────────────┐
+           │                                         │
+           │ N                                       │ N
+┌──────────▼───────────────────────────────┐  ┌─────▼───────────────────────────┐
+│               CLIENTES                   │  │            USUARIOS              │
+│  id (PK) │ tenant_id (FK) │ nome         │  │  id (PK) │ tenant_id (FK)        │
+│  cpf (UNIQUE/tenant) │ telefone          │  │  nome │ email (UNIQUE/tenant)    │
+│  email │ endereco                        │  │  senha │ role (LEITOR/ESCRITOR)  │
+│  created_at │ updated_at                 │  │  ativo │ created_at │ updated_at  │
+└──────────┬───────────────────────────────┘  └─────────────────────────────────┘
+           │ 1
+           │ tem muitos
+           │ N
+┌──────────▼────────────────────────────────────────────────┐
+│                          CARS                              │
+│  id (PK) │ tenant_id (FK) │ cliente_id (FK)               │
+│  plate (UNIQUE/tenant) │ model │ brand                    │
+│  color │ year │ created_at                                │
+└──────────┬─────────────────────────────────────────────────┘
+           │ 1
+           │ tem muitos
+           │ N
+┌──────────▼───────────────────────────────────────────────────────────┐
+│                        SERVICE_HISTORY                                │
+│  id (PK) │ car_id (FK) │ tenant_id (FK)                              │
+│  service_type │ description │ service_date                           │
+│  cost │ mileage │ technician_name │ notes                            │
+│  created_at │ updated_at                                             │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Regras de negócio refletidas no banco:**
+- CPF único por tenant: `UNIQUE (tenant_id, cpf)`
+- Placa única por tenant: `UNIQUE (tenant_id, plate)`
+- E-mail de usuário único por tenant: enforçado via repository + constraint
+
 ---
 
 ## 🛠️ Stack Tecnológica
@@ -39,22 +110,129 @@ Projeto desenvolvido com foco em arquitetura profissional, versionamento de banc
 
 ---
 
+## 📦 Entidades
+
+| Entidade        | Tabela            | Descrição                                               |
+|----------------|-------------------|---------------------------------------------------------|
+| `Tenant`        | `tenants`         | Representa uma oficina/empresa no sistema               |
+| `Cliente`       | `clientes`        | Cliente da oficina (dono do carro)                      |
+| `Car`           | `cars`            | Veículo do cliente com FK para `tenants` e `clientes`   |
+| `ServiceHistory`| `service_history` | Registro de serviços realizados no veículo              |
+| `Usuario`       | `usuarios`        | Operador do sistema (mecânico, recepcionista, gerente)  |
+
+---
+
+## 🔎 Repositories
+
+Cada entidade tem um repository dedicado que estende `JpaRepository`, fornecendo CRUD completo + queries específicas por domínio.
+
+### `TenantRepository`
+
+Responsável pelas operações de acesso à tabela `tenants`.
+
+| Método                               | Descrição                                              |
+|--------------------------------------|--------------------------------------------------------|
+| `findBySlug(slug)`                   | Busca tenant pelo identificador de URL amigável        |
+| `existsBySlug(slug)`                 | Valida unicidade de slug antes de criar tenant         |
+| `findByName(name)`                   | Busca tenant pelo nome exato                           |
+| `findByNameContainingIgnoreCase(…)`  | Busca tenants por parte do nome (case-insensitive)     |
+| `existsByName(name)`                 | Verifica se já existe tenant com aquele nome           |
+| `findAllOrderedByName()`             | Lista todos os tenants ordenados A→Z                   |
+
+---
+
+### `UsuarioRepository`
+
+Responsável pelos operadores que acessam o sistema. Suporta duas roles:
+
+- **`LEITOR`** → Somente visualização de dados
+- **`ESCRITOR`** → Criação, edição e exclusão de dados
+
+| Método                                        | Descrição                                              |
+|-----------------------------------------------|--------------------------------------------------------|
+| `findByTenantIdAndEmail(tenantId, email)`      | Login: localiza usuário pelo tenant + e-mail           |
+| `existsByTenantIdAndEmail(tenantId, email)`    | Valida unicidade de e-mail dentro do tenant            |
+| `findByTenantId(tenantId)`                    | Lista todos os usuários de um tenant                   |
+| `findByTenantIdAndAtivoTrue(tenantId)`        | Lista apenas usuários ativos (podem fazer login)       |
+| `findByTenantIdAndAtivoFalse(tenantId)`       | Lista usuários inativos (auditoria/reativação)         |
+| `findByTenantIdAndRole(tenantId, role)`        | Filtra usuários por role dentro do tenant              |
+| `findByTenantIdAndRoleAndAtivoTrue(…)`        | Usuários ativos com role específica                    |
+| `existsByIdAndTenantId(id, tenantId)`         | Segurança: garante que o usuário pertence ao tenant    |
+| `countActiveByTenantId(tenantId)`             | Conta usuários ativos (billing / limite de plano)      |
+| `findByTenantIdAndNomeContainingIgnoreCase(…)` | Busca usuário por nome parcial no painel admin        |
+
+---
+
+### `ClienteRepository`
+
+Gerencia os clientes das oficinas.
+
+| Método                                           | Descrição                                      |
+|--------------------------------------------------|------------------------------------------------|
+| `findByTenantId(tenantId)`                       | Lista todos os clientes do tenant              |
+| `findByTenantIdAndCpf(tenantId, cpf)`            | Busca cliente pelo CPF dentro do tenant        |
+| `existsByCpf(cpf)`                               | Verifica existência por CPF                    |
+| `findByTenantIdAndNomeContainingIgnoreCase(…)`   | Busca cliente por nome parcial                 |
+
+---
+
+### `CarRepository`
+
+Gerencia os veículos, com FK para `clientes` e `tenants`.
+
+| Método                                       | Descrição                                        |
+|----------------------------------------------|--------------------------------------------------|
+| `findByTenantId(tenantId)`                   | Lista todos os carros do tenant                  |
+| `findByClienteId(clienteId)`                 | Lista todos os carros de um cliente              |
+| `findByTenantIdAndPlate(tenantId, plate)`    | Busca carro pela placa dentro do tenant          |
+| `existsByTenantIdAndPlate(tenantId, plate)`  | Valida unicidade de placa antes de cadastrar     |
+| `findByTenantIdAndBrand(tenantId, brand)`    | Filtra carros por marca no tenant                |
+| `findByTenantIdAndYear(tenantId, year)`      | Filtra carros por ano no tenant                  |
+| `findByClienteIdOrderByCreatedAtDesc(…)`     | Histórico de carros do cliente (mais recente)    |
+
+---
+
+### `ServiceHistoryRepository`
+
+Gerencia o histórico de serviços realizados em cada veículo.
+
+| Método                                           | Descrição                                          |
+|--------------------------------------------------|----------------------------------------------------|
+| `findByCarIdOrderByServiceDateDesc(carId)`       | Histórico completo do carro (mais recente primeiro)|
+| `findByCarIdAndServiceDateBetween(…)`            | Serviços de um carro em um intervalo de datas      |
+| `findByCarIdAndServiceType(carId, type)`         | Filtra serviços por tipo (ex: "troca de óleo")     |
+| `findByTenantIdOrderByServiceDateDesc(tenantId)` | Todos os serviços de um tenant ordenados por data  |
+| `findTop5ByCarIdOrderByServiceDateDesc(carId)`   | Últimos 5 serviços de um veículo                   |
+
+---
+
 ## 🗄️ Banco de Dados
-
-### Entidades principais
-
-- `tenants`
-- `clientes`
-- `cars`
-- `service_history`
 
 ### Conceitos aplicados
 
 - UUID como chave primária
 - Integridade referencial forte
 - Índices estratégicos
-- Constraint única composta `(tenant_id, cpf)`
+- Constraint única composta `(tenant_id, cpf)` e `(tenant_id, plate)`
 - Versionamento controlado por migrations
+
+### Flyway Migrations
+
+Localização:
+
+```
+src/main/resources/db/migration
+```
+
+| Migration                        | O que cria                    |
+|----------------------------------|-------------------------------|
+| `V1__create_tenants.sql`         | Tabela `tenants`              |
+| `V2__create_clientes.sql`        | Tabela `clientes`             |
+| `V3__create_cars.sql`            | Tabela `cars`                 |
+| `V4__create_service_history.sql` | Tabela `service_history`      |
+| `V5__create_usuarios.sql`        | Tabela `usuarios`             |
+
+O banco é versionado automaticamente ao subir a aplicação.
 
 ---
 
@@ -76,7 +254,7 @@ Não versionar o arquivo `.env`.
 
 ## 🐳 Executando com Docker
 
-### Subir banco
+### Subir banco + PgAdmin
 
 ```
 docker-compose up -d
@@ -100,6 +278,11 @@ docker ps
 docker exec -it autohub-db psql -U autohub -d autohub
 ```
 
+### PgAdmin
+
+Acesse `http://localhost:5050` com as credenciais configuradas no `.env`.  
+Crie um server apontando para `autohub-db:5432`.
+
 ---
 
 ## 🚀 Rodando a aplicação
@@ -115,7 +298,7 @@ Linux / Mac:
 Windows:
 
 ```
-mvnw spring-boot:run
+.\mvnw spring-boot:run
 ```
 
 Aplicação sobe em:
@@ -126,32 +309,11 @@ http://localhost:8080
 
 ---
 
-## 🔄 Flyway Migrations
-
-Localização:
-
-```
-src/main/resources/db/migration
-```
-
-Padrão utilizado:
-
-```
-V1__create_tenants.sql
-V2__create_clientes.sql
-V3__create_cars.sql
-V4__create_service_history.sql
-```
-
-O banco é versionado automaticamente ao subir a aplicação.
-
----
-
 ## 🧠 Conceitos Aplicados
 
 - Multi-tenancy real por `tenant_id`
 - Separação clara de responsabilidades
-- Validação em múltiplas camadas
+- Validação em múltiplas camadas (Bean Validation + SQL constraints)
 - Versionamento de banco controlado
 - Ambiente local reproduzível
 - Estrutura preparada para JWT
@@ -160,27 +322,49 @@ O banco é versionado automaticamente ao subir a aplicação.
 
 ---
 
-## 📌 Roadmap
-
-- [ ] Filtro automático por tenant
-- [ ] Autenticação JWT
-- [ ] DTO + Mapper
-- [ ] Testes com Testcontainers
-- [ ] OpenAPI / Swagger
-- [ ] Deploy em ambiente cloud
-
----
-
 ## 📂 Estrutura do Projeto
 
 ```
 com.autohub_api
- ├── controller
- ├── service
- ├── repository
- ├── model.entity
- └── config
+ ├── controller       (vazio — próxima etapa)
+ ├── service          (vazio — próxima etapa)
+ ├── repository       ✅ implementado
+ │    ├── TenantRepository
+ │    ├── ClienteRepository
+ │    ├── CarRepository
+ │    ├── ServiceHistoryRepository
+ │    └── UsuarioRepository
+ ├── model
+ │    ├── entity       ✅ implementado
+ │    │    ├── Tenant
+ │    │    ├── Cliente
+ │    │    ├── Car
+ │    │    ├── ServiceHistory
+ │    │    └── Usuario
+ │    └── enums
+ │         └── UserRole (LEITOR / ESCRITOR)
+ ├── config           (vazio — próxima etapa)
+ ├── exception        (vazio — próxima etapa)
+ └── validation
 ```
+
+---
+
+## 📌 Roadmap
+
+- [x] Estrutura de entidades (Tenant, Cliente, Car, ServiceHistory, Usuario)
+- [x] Migrations Flyway (V1 → V5)
+- [x] Repositories com queries por domínio
+- [x] Multi-tenancy por tenant_id
+- [x] Docker + PgAdmin
+- [ ] DTOs (Request / Response)
+- [ ] Service layer (lógica de negócio)
+- [ ] Controllers REST
+- [ ] Tratamento global de exceções
+- [ ] Autenticação JWT
+- [ ] Filtro automático por tenant
+- [ ] Testes com Testcontainers
+- [ ] Deploy em ambiente cloud
 
 ---
 
@@ -194,5 +378,6 @@ Desenvolvido como projeto de estudo para construção de um SaaS real de gestão
 
 ✔ Banco versionado  
 ✔ Multi-tenancy implementado  
-✔ API funcional  
-🚧 Em evolução contínua
+✔ Entidades mapeadas  
+✔ Repositories implementados  
+🚧 Service layer em construção
