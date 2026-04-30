@@ -29,7 +29,7 @@ com.autohub_api
  │         ├── request/ ← ✅ 5 DTOs de entrada
  │         └── response/← ✅ 5 DTOs de saída
  ├── config/            ← ⬜ VAZIO — próxima etapa
- ├── exception/         ← ⬜ VAZIO — próxima etapa
+ ├── exception/         ← ✅ IMPLEMENTADO
  └── validation/        ← ⬜ VAZIO — próxima etapa
 ```
 
@@ -60,6 +60,10 @@ com.autohub_api
 | Repository | `CarRepository.java` | ✅ |
 | Repository | `ServiceHistoryRepository.java` | ✅ |
 | Repository | `UsuarioRepository.java` | ✅ |
+| Exception | `ErrorResponse.java` | ✅ |
+| Exception | `ResourceNotFoundException.java` | ✅ |
+| Exception | `BusinessException.java` | ✅ |
+| Exception | `GlobalExceptionHandler.java` | ✅ |
 | Migration | `V1__create_tenants.sql` | ✅ |
 | Migration | `V2__create_clientes.sql` | ✅ |
 | Migration | `V3__create_cars.sql` | ✅ |
@@ -279,6 +283,8 @@ docker exec -it autohub-db psql -U autohub -d autohub -c "\dt"
 3. **Toda nova tabela** exige migration Flyway — não usar `ddl-auto: update`
 4. **Isolamento multi-tenant** — todo `findById` deve ser `findByIdAndTenantId`
 5. **`service/` e `controller/` estão vazios** — não alterar repositories ou entities sem verificar o que está nessas pastas primeiro
+
+
 
 
 

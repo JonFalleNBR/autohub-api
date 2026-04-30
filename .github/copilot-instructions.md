@@ -313,11 +313,16 @@ com.autohub_api
  │         └── response/✅ TenantResponse, ClienteResponse, CarResponse,
  │                         ServiceHistoryResponse, UsuarioResponse
  ├── config/            ⬜ VAZIO
- ├── exception/         ⬜ VAZIO — TODO 2
+ ├── exception/         ✅ implementado
+ │    ├── ErrorResponse.java
+ │    ├── ResourceNotFoundException.java
+ │    ├── BusinessException.java
+ │    └── GlobalExceptionHandler.java
  └── validation/        ⬜ VAZIO
 ```
 
 Próxima migration Flyway disponível: **`V6__`**
+
 
 
 
