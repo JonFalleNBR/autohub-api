@@ -13,6 +13,10 @@ import java.util.UUID;
  * Os demais campos são opcionais e enriquecem o registro do serviço.</p>
  *
  * <p>Exemplos de {@code serviceType}: "Troca de óleo", "Revisão completa", "Alinhamento e balanceamento".</p>
+ *
+ * <p><strong>TODO 6 — Remover {@code tenantId} deste DTO após implementar JWT.</strong><br>
+ * Após o TODO 6, o {@code tenantId} será extraído automaticamente do token JWT
+ * via {@code TenantContext.get()} na camada de Service, e este campo deve ser removido.</p>
  */
 public record ServiceHistoryRequest(
 
@@ -44,4 +48,5 @@ public record ServiceHistoryRequest(
         String notes
 
 ) {}
+
 

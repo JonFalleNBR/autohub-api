@@ -8,6 +8,12 @@ import java.util.UUID;
  * DTO de entrada para criação e atualização de um {@code Cliente}.
  *
  * <p>O CPF deve ser único dentro do tenant — validação enforçada na camada de Service.</p>
+ *
+ * <p><strong>TODO 6 — Remover {@code tenantId} deste DTO após implementar JWT.</strong><br>
+ * Atualmente o tenant é informado pelo cliente na requisição, o que é inseguro:
+ * qualquer um poderia forjar um {@code tenantId} de outro tenant.
+ * Após o TODO 6, o {@code tenantId} será extraído automaticamente do token JWT
+ * via {@code TenantContext.get()} na camada de Service, e este campo deve ser removido.</p>
  */
 public record ClienteRequest(
 
@@ -32,4 +38,5 @@ public record ClienteRequest(
         String endereco
 
 ) {}
+
 

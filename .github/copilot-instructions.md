@@ -307,12 +307,17 @@ com.autohub_api
  ├── model/
  │    ├── entity/       ✅ 5 entidades (Tenant, Cliente, Car, ServiceHistory, Usuario)
  │    ├── enums/        ✅ UserRole (LEITOR / ESCRITOR)
- │    └── dto/          ⬜ NÃO EXISTE — TODO 1
+ │    └── dto/          ✅ implementado
+ │         ├── request/ ✅ TenantRequest, ClienteRequest, CarRequest,
+ │         │              ServiceHistoryRequest, UsuarioRequest
+ │         └── response/✅ TenantResponse, ClienteResponse, CarResponse,
+ │                         ServiceHistoryResponse, UsuarioResponse
  ├── config/            ⬜ VAZIO
  ├── exception/         ⬜ VAZIO — TODO 2
  └── validation/        ⬜ VAZIO
 ```
 
 Próxima migration Flyway disponível: **`V6__`**
+
 
 

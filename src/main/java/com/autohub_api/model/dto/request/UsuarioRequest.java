@@ -15,6 +15,10 @@ import java.util.UUID;
  * A camada de Service é responsável por aplicar o hash BCrypt antes de persistir
  * (implementação pendente no TODO 5 — Spring Security).</p>
  *
+ * <p><strong>TODO 6 — Remover {@code tenantId} deste DTO após implementar JWT.</strong><br>
+ * Após o TODO 6, o {@code tenantId} será extraído automaticamente do token JWT
+ * via {@code TenantContext.get()} na camada de Service, e este campo deve ser removido.</p>
+ *
  * <p>Roles disponíveis:</p>
  * <ul>
  *   <li>{@code LEITOR} — acesso somente leitura</li>
@@ -43,4 +47,5 @@ public record UsuarioRequest(
         UserRole role
 
 ) {}
+
 

@@ -11,6 +11,10 @@ import java.util.UUID;
  * validação enforçada na camada de Service via {@code CarRepository.existsByTenantIdAndPlate}.</p>
  *
  * <p>O {@code clienteId} vincula o veículo a um cliente existente do mesmo tenant.</p>
+ *
+ * <p><strong>TODO 6 — Remover {@code tenantId} deste DTO após implementar JWT.</strong><br>
+ * Após o TODO 6, o {@code tenantId} será extraído automaticamente do token JWT
+ * via {@code TenantContext.get()} na camada de Service, e este campo deve ser removido.</p>
  */
 public record CarRequest(
 
@@ -42,4 +46,5 @@ public record CarRequest(
         Integer year
 
 ) {}
+
 

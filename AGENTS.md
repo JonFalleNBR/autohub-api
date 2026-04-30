@@ -25,7 +25,9 @@ com.autohub_api
  ├── model/
  │    ├── entity/       ← ✅ IMPLEMENTADO
  │    ├── enums/        ← ✅ IMPLEMENTADO
- │    └── dto/          ← ⬜ AINDA NÃO EXISTE — criar aqui
+ │    └── dto/          ← ✅ IMPLEMENTADO
+ │         ├── request/ ← ✅ 5 DTOs de entrada
+ │         └── response/← ✅ 5 DTOs de saída
  ├── config/            ← ⬜ VAZIO — próxima etapa
  ├── exception/         ← ⬜ VAZIO — próxima etapa
  └── validation/        ← ⬜ VAZIO — próxima etapa
@@ -43,6 +45,16 @@ com.autohub_api
 | Entity | `ServiceHistory.java` | ✅ |
 | Entity | `Usuario.java` | ✅ |
 | Enum | `UserRole.java` (LEITOR / ESCRITOR) | ✅ |
+| DTO Request | `TenantRequest.java` | ✅ |
+| DTO Request | `ClienteRequest.java` | ✅ |
+| DTO Request | `CarRequest.java` | ✅ |
+| DTO Request | `ServiceHistoryRequest.java` | ✅ |
+| DTO Request | `UsuarioRequest.java` | ✅ |
+| DTO Response | `TenantResponse.java` | ✅ |
+| DTO Response | `ClienteResponse.java` | ✅ |
+| DTO Response | `CarResponse.java` | ✅ |
+| DTO Response | `ServiceHistoryResponse.java` | ✅ |
+| DTO Response | `UsuarioResponse.java` | ✅ |
 | Repository | `TenantRepository.java` | ✅ |
 | Repository | `ClienteRepository.java` | ✅ |
 | Repository | `CarRepository.java` | ✅ |
@@ -176,6 +188,14 @@ Após JWT implementado, injetar `tenantId` automaticamente via token — não ex
 - Criar `TenantContext.java` com `ThreadLocal<UUID>` para armazenar o tenant da requisição
 - `JwtFilter` popula o `TenantContext` ao validar o token
 - Services usam `TenantContext.get()` ao invés de receber `tenantId` por parâmetro
+- **Remover o campo `tenantId`** dos seguintes DTOs de Request (atualmente presentes por ausência de JWT):
+  - `ClienteRequest.java`
+  - `CarRequest.java`
+  - `ServiceHistoryRequest.java`
+  - `UsuarioRequest.java`
+
+> ⚠️ Enquanto o JWT não estiver implementado, `tenantId` no body é uma solução temporária e insegura.
+> Qualquer cliente pode forjar um UUID de outro tenant. Isso será corrigido no TODO 5 + 6.
 
 ---
 
@@ -259,4 +279,7 @@ docker exec -it autohub-db psql -U autohub -d autohub -c "\dt"
 3. **Toda nova tabela** exige migration Flyway — não usar `ddl-auto: update`
 4. **Isolamento multi-tenant** — todo `findById` deve ser `findByIdAndTenantId`
 5. **`service/` e `controller/` estão vazios** — não alterar repositories ou entities sem verificar o que está nessas pastas primeiro
+
+
+
 
